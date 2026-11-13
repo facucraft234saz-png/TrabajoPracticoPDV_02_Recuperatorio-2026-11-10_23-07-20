@@ -11,6 +11,8 @@ public class ColorChangingInteractable : MonoBehaviour, IInteractable
     [SerializeField] private Color startColor = Color.red;
     [SerializeField] private Color finalColor = Color.green;
 
+    public bool IsCompleted => hasCompleted;
+
     [Header("Mensajes editables")]
     [SerializeField]
     private string initialMessage =
@@ -25,6 +27,8 @@ public class ColorChangingInteractable : MonoBehaviour, IInteractable
         "Proceso completado";
 
     private Renderer objectRenderer;
+
+  
 
     private bool isRunning;
     private bool hasCompleted;
