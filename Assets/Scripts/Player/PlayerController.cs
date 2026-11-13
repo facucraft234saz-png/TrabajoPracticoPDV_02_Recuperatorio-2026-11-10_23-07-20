@@ -32,15 +32,26 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        // Leer controles
-        horizontalInput = Input.GetAxisRaw("Horizontal");
-        verticalInput = Input.GetAxisRaw("Vertical");
+        // Movimiento EXCLUSIVAMENTE con WASD.
+        // Las flechas quedan reservadas para la camara.
+        horizontalInput = 0f;
+        verticalInput = 0f;
 
-        // Comprobar suelo mediante Raycast
+        if (Input.GetKey(KeyCode.A))
+            horizontalInput -= 1f;
+
+        if (Input.GetKey(KeyCode.D))
+            horizontalInput += 1f;
+
+        if (Input.GetKey(KeyCode.W))
+            verticalInput += 1f;
+
+        if (Input.GetKey(KeyCode.S))
+            verticalInput -= 1f;
+
         CheckGround();
 
-        // Registrar salto
-        if (Input.GetButtonDown("Jump") && isGrounded)
+        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
             jumpRequested = true;
         }
@@ -55,24 +66,28 @@ public class PlayerController : MonoBehaviour
 
     private void MovePlayer()
     {
+        if (cameraTransform == null)
+            return;
+
+        // Obtener la direccion de la camara.
         Vector3 forward = cameraTransform.forward;
         Vector3 right = cameraTransform.right;
 
-        // Eliminar la inclinación vertical de la cámara
+        // Ignorar la inclinacion vertical.
         forward.y = 0f;
         right.y = 0f;
 
         forward.Normalize();
         right.Normalize();
 
-        // Movimiento relativo a la cámara
+        // Movimiento relativo a la camara.
         Vector3 movement =
             forward * verticalInput +
             right * horizontalInput;
 
         movement = Vector3.ClampMagnitude(movement, 1f);
 
-        // Mantener la velocidad vertical de la física
+        // Mantener la velocidad vertical de la fisica.
         Vector3 velocity = rb.linearVelocity;
 
         rb.linearVelocity = new Vector3(
@@ -84,13 +99,11 @@ public class PlayerController : MonoBehaviour
 
     private void RotatePlayer()
     {
-        Vector3 direction = new Vector3(
-            horizontalInput,
-            0f,
-            verticalInput
-        );
+        if (cameraTransform == null)
+            return;
 
-        if (direction.sqrMagnitude < 0.01f)
+        // No rotar al jugador si no hay movimiento.
+        if (horizontalInput == 0f && verticalInput == 0f)
             return;
 
         Vector3 forward = cameraTransform.forward;
@@ -128,7 +141,6 @@ public class PlayerController : MonoBehaviour
 
         if (isGrounded)
         {
-            // Evitar acumular velocidad vertical anterior
             Vector3 velocity = rb.linearVelocity;
             velocity.y = 0f;
             rb.linearVelocity = velocity;
@@ -145,7 +157,10 @@ public class PlayerController : MonoBehaviour
     private void CheckGround()
     {
         if (groundCheck == null)
+        {
+            isGrounded = false;
             return;
+        }
 
         isGrounded = Physics.Raycast(
             groundCheck.position,
@@ -165,7 +180,8 @@ public class PlayerController : MonoBehaviour
 
         Gizmos.DrawLine(
             groundCheck.position,
-            groundCheck.position + Vector3.down * groundDistance
+            groundCheck.position +
+            Vector3.down * groundDistance
         );
     }
 }

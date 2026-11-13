@@ -1,9 +1,13 @@
 
 using UnityEngine;
+using System.Collections.Generic;
 
 public class DataCollectible : MonoBehaviour
 {
-    [Header("Datos del recolectable")]
+    private static readonly List<DataCollectible> allCollectibles =
+        new List<DataCollectible>();
+
+    [Header("Datos")]
     [SerializeField] private int points = 25;
 
     [Header("Animacion")]
@@ -11,13 +15,23 @@ public class DataCollectible : MonoBehaviour
 
     private bool collected;
 
+    private void Awake()
+    {
+        if (!allCollectibles.Contains(this))
+        {
+            allCollectibles.Add(this);
+        }
+    }
+
     private void Update()
     {
-        // Rotacion visual del objeto
-        transform.Rotate(
-            Vector3.up * rotationSpeed * Time.deltaTime,
-            Space.World
-        );
+        if (!collected)
+        {
+            transform.Rotate(
+                Vector3.up * rotationSpeed * Time.deltaTime,
+                Space.World
+            );
+        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -25,21 +39,38 @@ public class DataCollectible : MonoBehaviour
         if (collected)
             return;
 
-        // Buscar el sistema de puntuacion del jugador
-        PlayerScore playerScore =
+        PlayerScore score =
             other.GetComponentInParent<PlayerScore>();
 
-        if (playerScore == null)
+        if (score == null)
             return;
 
         collected = true;
 
-        // Agregar puntos
-        playerScore.AddPoints(points);
+        score.AddPoints(points);
 
-        Debug.Log("Dato recolectado correctamente.");
+        Debug.Log("Dato recolectado: +" + points);
 
-        // Eliminar el objeto
-        Destroy(gameObject);
+        // Ocultar, pero no destruir
+        gameObject.SetActive(false);
+    }
+
+    public static void RespawnAll()
+    {
+        foreach (DataCollectible collectible in allCollectibles)
+        {
+            if (collectible == null)
+                continue;
+
+            collectible.collected = false;
+            collectible.gameObject.SetActive(true);
+        }
+
+        Debug.Log("Todos los Data Collectible reaparecieron.");
+    }
+
+    private void OnDestroy()
+    {
+        allCollectibles.Remove(this);
     }
 }
