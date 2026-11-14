@@ -1,43 +1,130 @@
 
 using UnityEngine;
+using System.Collections;
 
-public class RaycastDoor : MonoBehaviour
+public class DoorInteractable : MonoBehaviour, IInteractable
 {
-    [Header("Configuracion de la puerta")]
-    [SerializeField] private float openAngle = 90f;
-    [SerializeField] private float openSpeed = 3f;
+    [Header("Desaparicion")]
+    [SerializeField] private float disappearDuration = 1f;
 
-    private bool isOpen;
+    [Header("Reaparicion")]
+    [SerializeField] private float respawnTime = 20f;
 
-    private Quaternion closedRotation;
-    private Quaternion openRotation;
+    [Header("Mensajes editables")]
+    [SerializeField]
+    private string initialMessage = "Presiona E para eliminar";
 
-    public bool IsOpen => isOpen;
+    [SerializeField]
+    private string processingMessage = "Eliminando puerta...";
 
-    private void Start()
+    [SerializeField]
+    private string finalMessage = "Puerta eliminada";
+
+    private Vector3 originalScale;
+
+    private bool isRunning;
+    private bool isHidden;
+
+    private float elapsedTime;
+
+    private Coroutine doorCoroutine;
+
+    public bool IsCompleted => isHidden;
+
+    private void Awake()
     {
-        closedRotation = transform.localRotation;
-
-        openRotation = closedRotation *
-            Quaternion.Euler(0f, openAngle, 0f);
+        originalScale = transform.localScale;
     }
 
-    private void Update()
+    public string GetPromptText()
     {
-        Quaternion targetRotation =
-            isOpen ? openRotation : closedRotation;
+        if (isRunning)
+        {
+            float remainingTime = Mathf.Max(
+                0f,
+                disappearDuration - elapsedTime
+            );
 
-        transform.localRotation = Quaternion.Slerp(
-            transform.localRotation,
-            targetRotation,
-            openSpeed * Time.deltaTime
-        );
+            return processingMessage +
+                   "\nTiempo restante: " +
+                   remainingTime.ToString("F1") + " s";
+        }
+
+        if (isHidden)
+        {
+            return finalMessage;
+        }
+
+        return initialMessage;
     }
 
     public void Interact()
     {
-        isOpen = !isOpen;
+        if (isRunning || isHidden)
+            return;
 
-        Debug.Log(isOpen ? "Puerta abierta." : "Puerta cerrada.");
+        doorCoroutine = StartCoroutine(DoorRoutine());
+    }
+
+    private IEnumerator DoorRoutine()
+    {
+        isRunning = true;
+        elapsedTime = 0f;
+
+        Debug.Log("Puerta interactuada. Comenzando eliminacion.");
+
+        Vector3 startScale = originalScale;
+        Vector3 targetScale = Vector3.zero;
+
+        // Reducir el tamaño sin modificar la posicion.
+        while (elapsedTime < disappearDuration)
+        {
+            elapsedTime += Time.deltaTime;
+
+            float progress = Mathf.Clamp01(
+                elapsedTime / disappearDuration
+            );
+
+            transform.localScale = Vector3.Lerp(
+                startScale,
+                targetScale,
+                progress
+            );
+
+            yield return null;
+        }
+
+        transform.localScale = Vector3.zero;
+
+        isRunning = false;
+        isHidden = true;
+
+        Debug.Log("Puerta eliminada. Esperando para reaparecer.");
+
+        // Esperar 20 segundos.
+        yield return new WaitForSeconds(respawnTime);
+
+        // Recuperar el tamaño original.
+        transform.localScale = originalScale;
+
+        isHidden = false;
+        doorCoroutine = null;
+
+        Debug.Log("La puerta reaparecio y puede utilizarse nuevamente.");
+    }
+
+    private void OnDisable()
+    {
+        if (doorCoroutine != null)
+        {
+            StopCoroutine(doorCoroutine);
+            doorCoroutine = null;
+        }
+
+        transform.localScale = originalScale;
+
+        isRunning = false;
+        isHidden = false;
+        elapsedTime = 0f;
     }
 }
