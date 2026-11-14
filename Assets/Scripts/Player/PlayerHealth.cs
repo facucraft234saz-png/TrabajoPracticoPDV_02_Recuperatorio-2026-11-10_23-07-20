@@ -108,6 +108,23 @@ public class PlayerHealth : MonoBehaviour
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
 
+
+    public void TakeEnvironmentalDamage(float damage)
+    {
+        if (isDead || damage <= 0f)
+            return;
+
+        currentHealth = Mathf.Max(0f, currentHealth - damage);
+
+        Debug.Log("Daño ambiental recibido: " + damage);
+
+        NotifyHealthChanged();
+
+        if (currentHealth <= 0f)
+            Die();
+    }
+
+
     private void Die()
     {
         if (isDead)

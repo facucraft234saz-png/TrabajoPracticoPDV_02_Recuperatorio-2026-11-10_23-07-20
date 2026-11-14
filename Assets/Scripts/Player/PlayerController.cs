@@ -25,6 +25,8 @@ public class PlayerController : MonoBehaviour
     private bool jumpRequested;
     private bool isGrounded;
 
+    private float speedMultiplier = 1f;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -32,8 +34,6 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        // Movimiento EXCLUSIVAMENTE con WASD.
-        // Las flechas quedan reservadas para la camara.
         horizontalInput = 0f;
         verticalInput = 0f;
 
@@ -64,36 +64,40 @@ public class PlayerController : MonoBehaviour
         JumpPlayer();
     }
 
+    // Permite modificar la velocidad desde otros scripts.
+    public void SetSpeedMultiplier(float multiplier)
+    {
+        speedMultiplier = Mathf.Max(0f, multiplier);
+    }
+
     private void MovePlayer()
     {
         if (cameraTransform == null)
             return;
 
-        // Obtener la direccion de la camara.
         Vector3 forward = cameraTransform.forward;
         Vector3 right = cameraTransform.right;
 
-        // Ignorar la inclinacion vertical.
         forward.y = 0f;
         right.y = 0f;
 
         forward.Normalize();
         right.Normalize();
 
-        // Movimiento relativo a la camara.
         Vector3 movement =
             forward * verticalInput +
             right * horizontalInput;
 
         movement = Vector3.ClampMagnitude(movement, 1f);
 
-        // Mantener la velocidad vertical de la fisica.
         Vector3 velocity = rb.linearVelocity;
 
+        float currentSpeed = moveSpeed * speedMultiplier;
+
         rb.linearVelocity = new Vector3(
-            movement.x * moveSpeed,
+            movement.x * currentSpeed,
             velocity.y,
-            movement.z * moveSpeed
+            movement.z * currentSpeed
         );
     }
 
@@ -102,7 +106,6 @@ public class PlayerController : MonoBehaviour
         if (cameraTransform == null)
             return;
 
-        // No rotar al jugador si no hay movimiento.
         if (horizontalInput == 0f && verticalInput == 0f)
             return;
 

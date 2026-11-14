@@ -51,16 +51,21 @@ public class DataCollectible : MonoBehaviour
 
         Debug.Log("Dato recolectado: +" + points);
 
-        // Ocultar, pero no destruir
+        // Desactivar sin destruir.
         gameObject.SetActive(false);
     }
 
     public static void RespawnAll()
     {
-        foreach (DataCollectible collectible in allCollectibles)
+        for (int i = allCollectibles.Count - 1; i >= 0; i--)
         {
+            DataCollectible collectible = allCollectibles[i];
+
             if (collectible == null)
+            {
+                allCollectibles.RemoveAt(i);
                 continue;
+            }
 
             collectible.collected = false;
             collectible.gameObject.SetActive(true);

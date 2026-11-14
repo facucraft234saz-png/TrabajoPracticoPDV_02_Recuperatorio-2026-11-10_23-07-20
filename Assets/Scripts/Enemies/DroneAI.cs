@@ -20,6 +20,8 @@ public class DroneAI : MonoBehaviour
     private NavMeshAgent agent;
     private PlayerHealth target;
 
+    private PlayerInvisibility targetInvisibility;
+
     private int currentPoint;
     private float waitTimer;
     private float nextAttackTime;
@@ -68,6 +70,18 @@ public class DroneAI : MonoBehaviour
         if (agent == null || !agent.isOnNavMesh)
             return;
 
+        if (targetInvisibility != null && targetInvisibility.IsInvisible)
+        {
+            target = null;
+            targetInvisibility = null;
+
+            agent.isStopped = false;
+            agent.speed = patrolSpeed;
+
+            GoToNextPoint();
+            return;
+        }
+
         if (target != null && target.IsDead)
         {
             target = null;
@@ -89,7 +103,14 @@ public class DroneAI : MonoBehaviour
         if (player == null || player.IsDead)
             return;
 
+        PlayerInvisibility invisibility =
+            player.GetComponent<PlayerInvisibility>();
+
+        if (invisibility != null && invisibility.IsInvisible)
+            return;
+
         target = player;
+        targetInvisibility = invisibility;
 
         agent.speed = chaseSpeed;
 

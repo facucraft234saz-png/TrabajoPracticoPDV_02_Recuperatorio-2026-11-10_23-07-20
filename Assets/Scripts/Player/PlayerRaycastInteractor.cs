@@ -11,23 +11,27 @@ public class PlayerRaycastInteractor : MonoBehaviour
     [Header("LayerMask")]
     [SerializeField] private LayerMask interactionMask;
 
-    private RaycastDoor currentDoor;
-    private TMP_Text currentPrompt;
+    [Header("Texto de ayuda")]
+    [SerializeField] private TMP_Text currentPrompt;
+
+    private IInteractable currentInteractable;
 
     private void Update()
     {
         CheckInteraction();
 
-        if (Input.GetKeyDown(KeyCode.E) && currentDoor != null)
+        if (Input.GetKeyDown(KeyCode.E) &&
+            currentInteractable != null)
         {
-            currentDoor.Interact();
+            currentInteractable.Interact();
+
             UpdatePromptText();
         }
     }
 
     private void CheckInteraction()
     {
-        RaycastDoor detectedDoor = null;
+        IInteractable detectedInteractable = null;
 
         if (playerCamera != null)
         {
@@ -43,22 +47,22 @@ public class PlayerRaycastInteractor : MonoBehaviour
                 interactionMask,
                 QueryTriggerInteraction.Ignore))
             {
-                detectedDoor =
-                    hit.collider.GetComponentInParent<RaycastDoor>();
+                detectedInteractable =
+                    hit.collider.GetComponentInParent<IInteractable>();
             }
         }
 
-        if (detectedDoor != currentDoor)
+        if (detectedInteractable != currentInteractable)
         {
             HidePrompt();
 
-            currentDoor = detectedDoor;
+            currentInteractable = detectedInteractable;
 
-            if (currentDoor != null)
+            if (currentInteractable != null)
                 ShowPrompt();
         }
 
-        if (currentDoor != null && currentPrompt != null)
+        if (currentInteractable != null && currentPrompt != null)
         {
             currentPrompt.transform.rotation =
                 playerCamera.transform.rotation;
@@ -69,40 +73,33 @@ public class PlayerRaycastInteractor : MonoBehaviour
 
     private void ShowPrompt()
     {
-        currentPrompt = currentDoor.GetComponentInChildren<TMP_Text>(true);
+        if (currentPrompt == null)
+            return;
 
-        if (currentPrompt != null)
-        {
-            currentPrompt.gameObject.SetActive(true);
-            UpdatePromptText();
-        }
-        else
-        {
-            Debug.LogWarning("La puerta no tiene un texto TMP asignado.");
-        }
+        currentPrompt.gameObject.SetActive(true);
+
+        UpdatePromptText();
     }
 
     private void HidePrompt()
     {
         if (currentPrompt != null)
             currentPrompt.gameObject.SetActive(false);
-
-        currentPrompt = null;
     }
 
     private void UpdatePromptText()
     {
-        if (currentPrompt == null || currentDoor == null)
+        if (currentPrompt == null ||
+            currentInteractable == null)
             return;
 
-        currentPrompt.text = currentDoor.IsOpen
-            ? "Presiona E para cerrar"
-            : "Presiona E para abrir";
+        currentPrompt.text =
+            currentInteractable.GetPromptText();
     }
 
     private void OnDisable()
     {
         HidePrompt();
-        currentDoor = null;
+        currentInteractable = null;
     }
 }

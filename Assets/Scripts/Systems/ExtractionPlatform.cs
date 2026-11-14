@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 public class ExtractionPlatform : MonoBehaviour
@@ -173,14 +172,10 @@ public class ExtractionPlatform : MonoBehaviour
         if (direction.sqrMagnitude < 0.001f)
             return;
 
-        // Orientar el texto hacia la camara.
+        // Orientar el texto hacia la camara correctamente sin invertirlo.
         Quaternion rotation =
             Quaternion.LookRotation(direction.normalized, Vector3.up);
 
-        // Corregir la orientacion frontal del TextMesh.
-        platformText.transform.rotation =
-            rotation * Quaternion.Euler(0f, 180f, 0f);
+        platformText.transform.rotation = rotation;
     }
-
 }
-
